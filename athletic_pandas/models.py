@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -37,6 +39,26 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
     def power_per_kg(self):
         ppkg = self.power / self.athlete.weight
         return ppkg
+
+    @staticmethod
+    def _tau_w_balance(power_above_cp):
+        return 546*math.e**(0.01*power_above_cp) + 316
+
+    @requires(columns=['power'], athlete=['cp', 'w_prime'])
+    def w_balance(self, tau=None):
+        instant_w_bal = self.athlete.w_prime
+        w_balance = []
+        w_balance.append(instant_w_bal)
+
+        for power in self.power:
+            power_above_cp = power - self.athlete.cp
+            if power_above_cp >= 0:
+                instant_w_bal = instant_w_bal - power_above_cp
+            else:
+                pass
+            w_balance.append(instant_w_bal)
+
+        return w_balance
 
 
 class Athlete:
