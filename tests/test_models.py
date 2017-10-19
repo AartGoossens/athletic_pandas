@@ -171,8 +171,21 @@ class TestWorkoutDataFrame(unittest.TestCase):
         self._import_csv_as_wdf()
         self.wdf.athlete.cp = 200
         self.wdf.athlete.w_prime = 20000
-        
         w_balance = self.wdf.w_balance()
+
+        self.assertEqual(len(self.wdf), len(w_balance))
         self.assertEqual(w_balance[0], 20000)
-        self.assertEqual(w_balance[2500], 14747)
-        self.assertEqual(w_balance[-1], 14100)
+        self.assertEqual(w_balance[2500], 17130.141138397506)
+        self.assertEqual(w_balance[-1], 18631.437307329579)
+
+    def test_w_balance_2(self):
+        self._import_csv_as_wdf()
+        self.wdf.athlete.cp = 200
+        self.wdf.athlete.w_prime = 20000
+        w_balance = self.wdf.w_balance_2()
+
+        import pudb; pu.db
+        self.assertEqual(len(self.wdf), len(w_balance))
+        self.assertEqual(w_balance[0], 20000)
+        self.assertEqual(w_balance[2500], 17130.141138397506)
+        self.assertEqual(w_balance[-1], 18631.437307329579)

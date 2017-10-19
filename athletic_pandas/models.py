@@ -41,22 +41,43 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
         return ppkg
 
     @staticmethod
-    def _tau_w_balance(power_above_cp):
-        return 546*math.e**(0.01*power_above_cp) + 316
+    def _tau_w_balance(dcp):
+        return 546*math.e**(-0.01*dcp) + 316
 
     @requires(columns=['power'], athlete=['cp', 'w_prime'])
     def w_balance(self, tau=None):
-        instant_w_bal = self.athlete.w_prime
         w_balance = []
-        w_balance.append(instant_w_bal)
+        work_below_cp = 0
 
-        for power in self.power:
+        for i, power in enumerate(self.power):
+            work_below_cp += min(self.athlete.cp, power)
+            dcp = work_below_cp/(i+1)
+            tau = self._tau_w_balance(dcp)
+
+            w_exp_total = 0
+            for v, power in enumerate(self.power[:i]):
+                w_exp = max(0, power - self.athlete.cp)
+                w_exp_total += w_exp*(math.e**(-(i-v)/tau))
+            w_balance.append(self.athlete.w_prime - w_exp_total)
+
+        return w_balance
+
+    @requires(columns=['power'], athlete=['cp', 'w_prime'])
+    def w_balance_3(self, tau=None):
+        s_n = 0
+        w_balance = []
+        work_below_cp = 0
+        
+        for i, power in enumerate(self.power):
+            work_below_cp += min(self.athlete.cp, power)
+            dcp = work_below_cp/(i+1)
+            tau = self._tau_w_balance(dcp)
+
             power_above_cp = power - self.athlete.cp
-            if power_above_cp >= 0:
-                instant_w_bal = instant_w_bal - power_above_cp
-            else:
-                pass
-            w_balance.append(instant_w_bal)
+            w_exp = max(0, power_above_cp)
+
+            s_n = s_n + w_exp*(math.e**(i/tau))
+            w_balance.append(self.athlete.w_prime-s_n*math.e**(-i/tau))
 
         return w_balance
 
