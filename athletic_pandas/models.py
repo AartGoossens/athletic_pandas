@@ -41,8 +41,8 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
         return ppkg
 
     @staticmethod
-    def _tau_w_balance(dcp):
-        return 546*math.e**(-0.01*dcp) + 316
+    def _tau_w_prime_balance(average_work_below_cp):
+        return 546*math.e**(-0.01*average_work_below_cp) + 316
 
     @requires(columns=['power'], athlete=['cp', 'w_prime'])
     def w_balance(self, tau=None):
@@ -52,7 +52,7 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
         for i, power in enumerate(self.power):
             work_below_cp += min(self.athlete.cp, power)
             dcp = work_below_cp/(i+1)
-            tau = self._tau_w_balance(dcp)
+            tau = self._tau_w_prime_balance(dcp)
 
             w_exp_total = 0
             for v, power in enumerate(self.power[:i]):
@@ -63,21 +63,25 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
         return w_balance
 
     @requires(columns=['power'], athlete=['cp', 'w_prime'])
-    def w_balance_3(self, tau=None):
-        s_n = 0
-        w_balance = []
+    def w_prime_balance(self):
+        sampling_rate = 1
         work_below_cp = 0
+        running_sum = 0
+        w_balance = []
         
         for i, power in enumerate(self.power):
-            work_below_cp += min(self.athlete.cp, power)
-            dcp = work_below_cp/(i+1)
-            tau = self._tau_w_balance(dcp)
+            work_below_cp += min(self.athlete.cp, power)*sampling_rate
+            average_work_below_cp = work_below_cp/(i+1)
+            tau = self._tau_w_prime_balance(average_work_below_cp)
 
             power_above_cp = power - self.athlete.cp
-            w_exp = max(0, power_above_cp)
+            w_prime_expenditure = max(0, power_above_cp)*sampling_rate
+            running_sum = running_sum + \
+                w_prime_expenditure*(math.e**(i*sampling_rate/tau))
 
-            s_n = s_n + w_exp*(math.e**(i/tau))
-            w_balance.append(self.athlete.w_prime-s_n*math.e**(-i/tau))
+            w_balance.append(
+                self.athlete.w_prime - running_sum*math.e**(-i*sampling_rate/tau)
+            )
 
         return w_balance
 
