@@ -65,7 +65,7 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
                 self.athlete.w_prime - running_sum*math.e**(-i*sampling_rate/tau)
             )
 
-        return w_balance
+        return pd.Series(w_balance)
 
 
 class Athlete:

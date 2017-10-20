@@ -183,4 +183,4 @@ class TestWorkoutDataFrame(unittest.TestCase):
         self.assertEqual(len(self.wdf), len(w_balance))
         self.assertEqual(w_balance[0], 20000)
         self.assertEqual(w_balance[2500], 18389.473009018817)
-        self.assertEqual(w_balance[-1], 19597.259313320854)
+        self.assertEqual(w_balance[3577], 19597.259313320854)
