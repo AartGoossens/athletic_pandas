@@ -40,40 +40,22 @@ class WorkoutDataFrame(BaseWorkoutDataFrame):
         ppkg = self.power / self.athlete.weight
         return ppkg
 
-    @staticmethod
-    def _tau_w_prime_balance(average_work_below_cp):
-        return 546*math.e**(-0.01*average_work_below_cp) + 316
-
-    @requires(columns=['power'], athlete=['cp', 'w_prime'])
-    def w_balance(self, tau=None):
-        w_balance = []
-        work_below_cp = 0
-
-        for i, power in enumerate(self.power):
-            work_below_cp += min(self.athlete.cp, power)
-            dcp = work_below_cp/(i+1)
-            tau = self._tau_w_prime_balance(dcp)
-
-            w_exp_total = 0
-            for v, power in enumerate(self.power[:i]):
-                w_exp = max(0, power - self.athlete.cp)
-                w_exp_total += w_exp*(math.e**(-(i-v)/tau))
-            w_balance.append(self.athlete.w_prime - w_exp_total)
-
-        return w_balance
+    def _tau_w_prime_balance(self):
+        avg_power_below_cp = self.power[self.power < self.athlete.cp].mean()
+        return 546*math.e**(-0.01*avg_power_below_cp) + 316
 
     @requires(columns=['power'], athlete=['cp', 'w_prime'])
     def w_prime_balance(self):
+        '''
+        Source:
+        Skiba, Philip Friere, et al. "Modeling the expenditure and reconstitution of work capacity above critical power." Medicine and science in sports and exercise 44.8 (2012): 1526-1532.
+        '''
         sampling_rate = 1
-        work_below_cp = 0
         running_sum = 0
         w_balance = []
+        tau = self._tau_w_prime_balance()
         
         for i, power in enumerate(self.power):
-            work_below_cp += min(self.athlete.cp, power)*sampling_rate
-            average_work_below_cp = work_below_cp/(i+1)
-            tau = self._tau_w_prime_balance(average_work_below_cp)
-
             power_above_cp = power - self.athlete.cp
             w_prime_expenditure = max(0, power_above_cp)*sampling_rate
             running_sum = running_sum + \
