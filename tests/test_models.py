@@ -17,6 +17,8 @@ class TestAthlete(unittest.TestCase):
         self.assertTrue(hasattr(athlete, 'weight'))
         self.assertTrue(hasattr(athlete, 'dob'))
         self.assertTrue(hasattr(athlete, 'ftp'))
+        self.assertTrue(hasattr(athlete, 'cp'))
+        self.assertTrue(hasattr(athlete, 'w_prime'))
 
     def test_init(self):
         self.assertEqual(self.athlete.name, 'Chris')
@@ -129,7 +131,7 @@ class TestWorkoutDataFrame(unittest.TestCase):
         mmp = self.wdf.mean_max_power()
 
         self.assertEqual(mmp[1], 280)
-        self.assertEqual(mmp[300], 209)
+        self.assertEqual(mmp[300], 209.43666666666667)
 
     def test_mean_max_power_missing_power(self):
         del self.wdf['power']
@@ -140,18 +142,45 @@ class TestWorkoutDataFrame(unittest.TestCase):
     def test_weighted_average_power(self):
         self._import_csv_as_wdf()
 
-        self.assertEqual(self.wdf.weighted_average_power(), 156)
+        self.assertEqual(self.wdf.weighted_average_power(), 156.24624656343036)
+
+    def test_weighted_average_power_missing_weight(self):
+        self._import_csv_as_wdf()
+        self.wdf.athlete.weight = None
+
+        self.assertEqual(self.wdf.weighted_average_power(), 156.24624656343036)
+
+        with self.assertRaises(exceptions.MissingDataException):
+            self.wdf.power_per_kg()
 
     def test_power_per_kg(self):
         self._import_csv_as_wdf()
         self.wdf.athlete.ftp = 300
         ppkg = self.wdf.power_per_kg()
 
-        self.assertEqual(ppkg[1], 1.16)
-        self.assertEqual(ppkg[100], 1.01)
+        self.assertEqual(ppkg[1], 1.1625000000000001)
+        self.assertEqual(ppkg[100], 1.0125)
 
     def test_power_per_kg_missing_weight(self):
         self.wdf.athlete.weight = None
 
         with self.assertRaises(exceptions.MissingDataException):
             self.wdf.power_per_kg()
+
+    def test_tau_w_prime_balance(self):
+        self._import_csv_as_wdf()
+        self.wdf.athlete.cp = 200
+        self.wdf.athlete.w_prime = 20000
+        tau = self.wdf._tau_w_prime_balance()
+        self.assertEqual(tau, 482.32071983184653)
+
+    def test_w_prime_balance(self):
+        self._import_csv_as_wdf()
+        self.wdf.athlete.cp = 200
+        self.wdf.athlete.w_prime = 20000
+        w_balance = self.wdf.w_prime_balance()
+
+        self.assertEqual(len(self.wdf), len(w_balance))
+        self.assertEqual(w_balance[0], 20000)
+        self.assertEqual(w_balance[2500], 18389.473009018817)
+        self.assertEqual(w_balance[3577], 19597.259313320854)
