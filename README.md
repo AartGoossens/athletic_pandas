@@ -1,4 +1,7 @@
 # Athletic Pandas
+----------------
+DEPRECATION NOTICE: This library has been deprecated. Code has been moved to [sweatpy](https://github.com/GoldenCheetah/sweatpy) and development will continue there.
+----------------
 
 ## Introduction
 Athletic Pandas is an extension of [pandas](https://github.com/pandas-dev/pandas) designed to make workout analysis a breeze. The current state of the project is very beta: features might be added, removed or changed in backwards incompatible ways. When the time is right a stable version will be released. Get in touch with me or create an issue if you have problems/questions/feature requests/special use cases.
